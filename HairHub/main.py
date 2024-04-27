@@ -110,7 +110,7 @@ if selected2 == "Contact":
     Contact.app()
 
 # streamlit run YOURFILENAME.py --server.enableCORS=false
-# streamlit run 0_🏠_Home.py --server.enableCORS=false
+
 
 
 

@@ -25,14 +25,4 @@ def app():
             # Process the message (e.g., send email, store in database)
             st.success("Message submitted successfully! We'll get back to you soon.")
 
-# def main():
-#     contact_us()
 
-# if __name__ == "__main__":
-#     main()
-
-
-
-
-# if __name__ == '__main__':
-#     show_contact_us()
