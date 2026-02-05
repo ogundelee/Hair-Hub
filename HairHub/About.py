@@ -18,7 +18,7 @@ def app():
 
     st.title('Meet our C.E.O')
     # File path to your image
-    image_path = 'Hairhub_Images/Esther Ogundele_headshot.jpg'
+    image_path = 'HairHub/Hairhub_Images/Esther Ogundele_headshot.jpg'
 
     st.image(image_path, caption='Esther Ogundele - C.E.O of Hair Hub', use_container_width=True)
 

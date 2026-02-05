@@ -21,17 +21,17 @@ def app():
     
     with col1:
         with st.container(border=True):
-            st.image("Hairhub_Images/Braider.jpeg")
+            st.image("HairHub/Hairhub_Images/Braider.jpeg")
             st.button(services[0], key="btn_braider", use_container_width=True)
 
     with col2:
         with st.container(border=True):
-            st.image("Hairhub_Images/Barber.jpeg")
+            st.image("HairHub/Hairhub_Images/Barber.jpeg")
             st.button(services[1], key="btn_barber", use_container_width=True)
         
     with col3:
         with st.container(border=True):
-            st.image("Hairhub_Images/Loctician.jpg")
+            st.image("HairHub/Hairhub_Images/Loctician.jpg")
             st.button(services[2], key="btn_loc", use_container_width=True)
 
     st.divider() 
@@ -43,7 +43,7 @@ def app():
     
     with col_img:
         with st.container(border=True):
-            st.image("Hairhub_Images/Sample_Braider.webp", use_container_width=True)
+            st.image("HairHub/Hairhub_Images/Sample_Braider.webp", use_container_width=True)
             st.markdown("<h3 style='text-align: center;'>Anna</h3>", unsafe_allow_html=True)
         
     with col_text:
