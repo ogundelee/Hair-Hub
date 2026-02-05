@@ -17,7 +17,7 @@ selected2 = option_menu(None, ["Home", "About", "Stylists", "Book", "Contact"],
         "nav-link": {"font-size": "18px", "text-align": "left", "margin":"0px", "--hover-color": "#eee"},
         "nav-link-selected": {"background-color": "green"},
     })
-with open('hairhub.css') as f:
+with open('HairHub/hairhub.css') as f:
     st.markdown(f'<style>{f.read()}</style>', unsafe_allow_html=True)
 
 if selected2 == "Home":
