@@ -18,11 +18,9 @@ def app():
 
     st.title('Meet our C.E.O')
     # File path to your image
-    image_path = 'https://storage.cloud.google.com/ceo_image/New%20Headshot.jpg'
-    # /Users/estherogundele/Documents/Headshots/New Headshot.jpg
+    image_path = 'Hairhub_Images/Esther Ogundele_headshot.jpg'
 
-    # Display the image
-    st.image(image_path, caption='Your Image', use_column_width=True)
+    st.image(image_path, caption='Esther Ogundele - C.E.O of Hair Hub', use_container_width=True)
 
 # if __name__ == '__main__':
 #     app()
