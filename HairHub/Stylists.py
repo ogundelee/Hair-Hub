@@ -9,6 +9,7 @@ def app():
             width: 100%;
             height: 200px; /* Force all images to this height */
             object-fit: cover; /* This crops the image to fill the space without stretching */
+            aspect-ratio: 1 / 1; /* Optional: maintain a square aspect ratio */
             border-radius: 5px;
         }
         </style>
@@ -21,17 +22,17 @@ def app():
     
     with col1:
         with st.container(border=True):
-            st.image("HairHub/Hairhub_Images/Braider.jpeg")
+            st.image("Hairhub_Images/Braider.jpeg")
             st.button(services[0], key="btn_braider", use_container_width=True)
 
     with col2:
         with st.container(border=True):
-            st.image("HairHub/Hairhub_Images/Barber.jpeg")
+            st.image("Hairhub_Images/Barber.jpeg")
             st.button(services[1], key="btn_barber", use_container_width=True)
         
     with col3:
         with st.container(border=True):
-            st.image("HairHub/Hairhub_Images/Loctician.jpg")
+            st.image("Hairhub_Images/Loctician.jpg")
             st.button(services[2], key="btn_loc", use_container_width=True)
 
     st.divider() 
@@ -43,7 +44,7 @@ def app():
     
     with col_img:
         with st.container(border=True):
-            st.image("HairHub/Hairhub_Images/Sample_Braider.webp", use_container_width=True)
+            st.image("Hairhub_Images/Sample_Braider.webp", use_container_width=True)
             st.markdown("<h3 style='text-align: center;'>Anna</h3>", unsafe_allow_html=True)
         
     with col_text:
