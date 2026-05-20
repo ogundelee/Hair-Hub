@@ -377,7 +377,7 @@ def _render_landing():
 
     st.markdown(
         "<p style='text-align:center; font-size:13px; color:#9ca3af; "
-        "padding:24px 0 8px;'>© 2026 Hair Hub. All rights reserved.</p>",
+        "padding:24px 0 0; margin-bottom:-60px;'>© 2026 Hair Hub. All rights reserved.</p>",
         unsafe_allow_html=True,
     )
 
@@ -470,6 +470,6 @@ else:
             _get_help_dialog()
     st.markdown(
         "<p style='text-align:center; font-size:13px; color:#9ca3af; "
-        "padding:16px 0 8px;'>© 2026 Hair Hub. All rights reserved.</p>",
+        "padding:16px 0 0; margin-bottom:-60px;'>© 2026 Hair Hub. All rights reserved.</p>",
         unsafe_allow_html=True,
     )
