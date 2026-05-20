@@ -1,0 +1,208 @@
+rules_version = '2';
+
+// ===============================================================
+// Data Model
+// ===============================================================
+//
+// users/{uid}              — private, owner-only
+// stylists/{stylistId}     — public read, owner write
+// bookings/{bookingId}     — client + stylist read/write only
+// contact_messages/{id}    — authenticated create; Admin SDK reads only
+//
+// ===============================================================
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ─────────────────────────────────────────────────────────────
+    // Helper functions
+    // ─────────────────────────────────────────────────────────────
+
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isOwner(uid) {
+      return isAuthenticated() && request.auth.uid == uid;
+    }
+
+    function isValidEmail(email) {
+      return email is string &&
+        email.size() <= 254 &&
+        email.matches('^[a-zA-Z0-9._%+\\-]+@[a-zA-Z0-9.\\-]+\\.[a-zA-Z]{2,}$');
+    }
+
+    function isValidUrl(url) {
+      return url is string &&
+        url.size() <= 500 &&
+        url.matches('^https://.*');
+    }
+
+    function isRecent(ts) {
+      return ts is timestamp &&
+        ts > request.time - duration.value(5, 'm') &&
+        ts <= request.time + duration.value(1, 'm');
+    }
+
+    function areImmutableFieldsUnchanged(fields) {
+      return !request.resource.data.diff(resource.data).affectedKeys().hasAny(fields);
+    }
+
+    // ─────────────────────────────────────────────────────────────
+    // Field validators
+    // ─────────────────────────────────────────────────────────────
+
+    function isValidUser(data) {
+      return data.uid is string && data.uid.size() >= 1 && data.uid.size() <= 128 &&
+        data.displayName is string && data.displayName.size() >= 1 && data.displayName.size() <= 50 &&
+        data.email is string && isValidEmail(data.email) &&
+        data.role is string && data.role in ['client', 'stylist'] &&
+        data.createdAt is timestamp &&
+        data.keys().hasOnly(['uid', 'displayName', 'email', 'role', 'createdAt']);
+    }
+
+    function isValidStylist(data) {
+      return data.uid is string && data.uid.size() >= 1 && data.uid.size() <= 128 &&
+        data.name is string && data.name.size() >= 1 && data.name.size() <= 80 &&
+        data.specialty is string && data.specialty in ['Braider', 'Barber', 'Loctician'] &&
+        data.bio is string && data.bio.size() >= 1 && data.bio.size() <= 500 &&
+        data.services is list && data.services.size() <= 20 &&
+        data.createdAt is timestamp &&
+        data.updatedAt is timestamp &&
+        data.keys().hasOnly(['uid', 'name', 'specialty', 'bio', 'services',
+                             'profileImageUrl', 'coverPhotoUrl', 'portfolioImages',
+                             'on_campus', 'handles', 'availableSlots',
+                             'createdAt', 'updatedAt']) &&
+        (!('on_campus' in data) || data.on_campus is bool) &&
+        (!('profileImageUrl' in data) || data.profileImageUrl == '' || isValidUrl(data.profileImageUrl)) &&
+        (!('coverPhotoUrl'   in data) || data.coverPhotoUrl   == '' || isValidUrl(data.coverPhotoUrl)) &&
+        (!('portfolioImages' in data) || (data.portfolioImages is list && data.portfolioImages.size() <= 12)) &&
+        (!('availableSlots'  in data) || (data.availableSlots is list && data.availableSlots.size() <= 200)) &&
+        (!('handles' in data) || (
+          data.handles is map &&
+          data.handles.keys().hasOnly(['ig', 'facebook']) &&
+          (!('ig'       in data.handles) || (data.handles.ig       is string && data.handles.ig.size()       <= 100)) &&
+          (!('facebook' in data.handles) || (data.handles.facebook is string && data.handles.facebook.size() <= 100))
+        ));
+    }
+
+    function isValidBooking(data) {
+      return data.clientUid  is string && data.clientUid.size()  >= 1 && data.clientUid.size()  <= 128 &&
+        data.clientName  is string && data.clientName.size()  >= 1 && data.clientName.size()  <= 80 &&
+        data.stylistId   is string && data.stylistId.size()   >= 1 && data.stylistId.size()   <= 128 &&
+        data.stylistName is string && data.stylistName.size() >= 1 && data.stylistName.size() <= 80 &&
+        data['service']  is string && data['service'].size()  >= 1 && data['service'].size()  <= 100 &&
+        data.appointmentDate is timestamp &&
+        data.status is string && data.status in ['pending', 'confirmed', 'cancelled', 'completed'] &&
+        data.createdAt is timestamp &&
+        data.keys().hasOnly(['clientUid', 'clientName', 'stylistId', 'stylistName',
+                             'service', 'appointmentDate', 'slotKey', 'status',
+                             'notes', 'inspirationImageUrl', 'createdAt']) &&
+        (!('notes'              in data) || (data.notes              is string && data.notes.size()              <= 500)) &&
+        (!('slotKey'            in data) || data.slotKey            is string) &&
+        (!('inspirationImageUrl' in data) || data.inspirationImageUrl == '' || isValidUrl(data.inspirationImageUrl));
+    }
+
+    function isValidContactMessage(data) {
+      return data.name    is string && data.name.size()    >= 1 && data.name.size()    <= 100 &&
+        data.email   is string && isValidEmail(data.email) &&
+        data.message is string && data.message.size() >= 1 && data.message.size() <= 2000 &&
+        data.createdAt is timestamp && isRecent(data.createdAt) &&
+        data.keys().hasOnly(['name', 'email', 'message', 'createdAt']);
+    }
+
+    // ─────────────────────────────────────────────────────────────
+    // Status transition guard (stylist-driven confirmations,
+    // client or stylist can cancel)
+    // ─────────────────────────────────────────────────────────────
+
+    function validStatusTransition(existing, newStatus, uid) {
+      let cur      = existing.status;
+      let client   = existing.clientUid;
+      let stylist  = existing.stylistId;
+      return
+        (uid == stylist && cur == 'pending'   && newStatus == 'confirmed') ||
+        (uid == stylist && cur == 'confirmed' && newStatus == 'completed') ||
+        (uid == stylist && cur in ['pending', 'confirmed'] && newStatus == 'cancelled') ||
+        (uid == client  && cur in ['pending', 'confirmed'] && newStatus == 'cancelled');
+    }
+
+    // ─────────────────────────────────────────────────────────────
+    // users/{uid} — only the owner can read or write their profile
+    // ─────────────────────────────────────────────────────────────
+
+    match /users/{uid} {
+      allow read: if isOwner(uid);
+
+      allow create: if isOwner(uid) &&
+        isValidUser(request.resource.data) &&
+        request.resource.data.uid == request.auth.uid;
+
+      // Only displayName is mutable; uid, email, role, createdAt are immutable
+      allow update: if isOwner(uid) &&
+        isValidUser(request.resource.data) &&
+        areImmutableFieldsUnchanged(['uid', 'role', 'email', 'createdAt']);
+
+      allow delete: if false;
+    }
+
+    // ─────────────────────────────────────────────────────────────
+    // stylists/{stylistId} — public read; only the stylist can write
+    // ─────────────────────────────────────────────────────────────
+
+    match /stylists/{stylistId} {
+      allow read: if true;
+
+      allow create: if isOwner(stylistId) &&
+        isValidStylist(request.resource.data) &&
+        request.resource.data.uid == request.auth.uid;
+
+      // uid and createdAt are immutable; updatedAt must be refreshed on every update
+      allow update: if isOwner(stylistId) &&
+        isValidStylist(request.resource.data) &&
+        areImmutableFieldsUnchanged(['uid', 'createdAt']) &&
+        isRecent(request.resource.data.updatedAt);
+
+      allow delete: if false;
+    }
+
+    // ─────────────────────────────────────────────────────────────
+    // bookings/{bookingId} — read/write only for the client or stylist
+    // ─────────────────────────────────────────────────────────────
+
+    match /bookings/{bookingId} {
+      allow read: if isAuthenticated() &&
+        (request.auth.uid == resource.data.clientUid ||
+         request.auth.uid == resource.data.stylistId);
+
+      allow create: if isAuthenticated() &&
+        isValidBooking(request.resource.data) &&
+        request.resource.data.clientUid == request.auth.uid &&
+        request.resource.data.status == 'pending' &&
+        request.resource.data.appointmentDate > request.time;
+
+      // Only status may change after creation
+      allow update: if isAuthenticated() &&
+        (request.auth.uid == resource.data.clientUid ||
+         request.auth.uid == resource.data.stylistId) &&
+        isValidBooking(request.resource.data) &&
+        areImmutableFieldsUnchanged(['clientUid', 'clientName', 'stylistId', 'stylistName',
+                                     'service', 'appointmentDate', 'slotKey',
+                                     'notes', 'inspirationImageUrl', 'createdAt']) &&
+        validStatusTransition(resource.data, request.resource.data.status, request.auth.uid);
+
+      allow delete: if false;
+    }
+
+    // ─────────────────────────────────────────────────────────────
+    // contact_messages/{messageId} — authenticated users can create;
+    // reads go through the Admin SDK only (bypasses these rules)
+    // ─────────────────────────────────────────────────────────────
+
+    match /contact_messages/{messageId} {
+      allow create: if isAuthenticated() && isValidContactMessage(request.resource.data);
+      allow read, update, delete: if false;
+    }
+
+  }
+}

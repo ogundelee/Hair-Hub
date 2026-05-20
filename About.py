@@ -1,27 +1,34 @@
 import streamlit as st
 
-st.subheader("About Us")
+
 def app():
-    st.title('The Gist')
-    st.write('Hair Hub is a pioneering web-based platform designed to address the diverse' + 
-    'hair care needs of students at Fisk Campus. Serving as a comprehensive central hub, Hair Hub' +
-    'offers a user-friendly interface where students can seamlessly access a variety of hair' + 
-    'services including braiding, barbering, and loc maintenance. Unlike existing platforms,' +
-    'Hair Hub distinguishes itself by consolidating all essential hair care services into one' +
-    'easily accessible platform, streamlining the process of finding and booking appointments with skilled professionals.')
+    st.title("About Hair Hub")
 
-    st.title('Mission')
-    st.write('Opening doors now that will remain open and beneficial to students long-term!')
+    st.markdown("""
+    Hair Hub is a pioneering platform designed for the Fisk University community —
+    connecting students who need hair care with talented student stylists right on campus.
 
-    st.title('Vision')
-    st.write('Growing the student entrepreneurs community every school year by at least 5%. One student at a time.')
+    We believe every student deserves to look and feel their best, without leaving campus
+    or breaking the bank.
+    """)
 
-    st.title('Meet our C.E.O')
-    # File path to your image
-    image_path = 'Hairhub_Images/Esther Ogundele_headshot.jpg'
+    st.divider()
 
-    st.image(image_path, caption='Esther Ogundele - C.E.O of Hair Hub', use_container_width=True)
+    col_text, col_img = st.columns([3, 2])
 
-# if __name__ == '__main__':
-#     app()
+    with col_text:
+        st.markdown("### Mission")
+        st.write("Opening doors now that will remain open and beneficial to students long-term!")
 
+        st.markdown("### Vision")
+        st.write(
+            "Growing the student entrepreneurs community every school year by at least 5%. "
+            "One student at a time."
+        )
+
+    with col_img:
+        st.image(
+            "Hairhub_Images/Esther Ogundele_headshot.jpg",
+            caption="Esther Ogundele — Founder & CEO",
+            use_container_width=True,
+        )

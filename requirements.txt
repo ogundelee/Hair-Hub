@@ -1,2 +1,5 @@
 streamlit
 streamlit-option-menu
+firebase-admin
+requests
+cloudinary
