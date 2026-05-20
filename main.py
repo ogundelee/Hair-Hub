@@ -375,6 +375,12 @@ def _render_landing():
         if st.button("Get Help", key="footer_get_help"):
             _get_help_dialog()
 
+    st.markdown(
+        "<p style='text-align:center; font-size:13px; color:#9ca3af; "
+        "padding:24px 0 8px;'>© 2026 Hair Hub. All rights reserved.</p>",
+        unsafe_allow_html=True,
+    )
+
 
 # ─────────────────────────────────────────────────────────────────────────────
 # App routing
@@ -462,3 +468,8 @@ else:
     with help_col:
         if st.button("Get Help", key="auth_help_btn", use_container_width=True):
             _get_help_dialog()
+    st.markdown(
+        "<p style='text-align:center; font-size:13px; color:#9ca3af; "
+        "padding:16px 0 8px;'>© 2026 Hair Hub. All rights reserved.</p>",
+        unsafe_allow_html=True,
+    )
